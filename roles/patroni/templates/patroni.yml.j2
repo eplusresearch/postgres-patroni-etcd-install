@@ -124,6 +124,10 @@ bootstrap:
     - host all all ::1/128 scram-sha-256
     # Cluster network only (secure)
     - host all all {{ cluster_network }} scram-sha-256
+{% if vpn_network | default('') | length > 0 %}
+    # VPN network access
+    - host all all {{ vpn_network }} scram-sha-256
+{% endif %}
 {% if pgbackrest_enabled | default(false) and groups['backup'] is defined %}
     # Backup server access
     - host replication {{ postgresql_replication_user }} {{ hostvars[groups['backup'][0]]['ansible_host'] }}/32 scram-sha-256

@@ -188,6 +188,33 @@
     - firewall_type | default('ufw') == 'ufw'
     - "'postgres' in group_names"
 
+# =============================================================================
+# VPN ACCESS RULES
+# =============================================================================
+- name: Configure UFW - Allow PgBouncer from VPN
+  ufw:
+    rule: allow
+    src: "{{ vpn_network }}"
+    port: "{{ pgbouncer_listen_port | default(6432) }}"
+    proto: tcp
+  when:
+    - firewall_enabled | default(true)
+    - firewall_type | default('ufw') == 'ufw'
+    - "'postgres' in group_names"
+    - vpn_network | default('') | length > 0
+
+- name: Configure UFW - Allow PostgreSQL from VPN
+  ufw:
+    rule: allow
+    src: "{{ vpn_network }}"
+    port: "{{ postgresql_port | default(5432) }}"
+    proto: tcp
+  when:
+    - firewall_enabled | default(true)
+    - firewall_type | default('ufw') == 'ufw'
+    - "'postgres' in group_names"
+    - vpn_network | default('') | length > 0
+
 - name: Configure UFW - Allow Node Exporter
   ufw:
     rule: allow

@@ -8,6 +8,7 @@
 # =============================================================================
 cluster_network: "{{ lookup('env', 'CLUSTER_NETWORK') | default('10.0.0.0/24', true) }}"
 cluster_netmask: "{{ lookup('env', 'CLUSTER_NETMASK') | default('255.255.255.0', true) }}"
+vpn_network: "{{ lookup('env', 'VPN_NETWORK') | default('', true) }}"
 
 # =============================================================================
 # TIME SYNCHRONIZATION
