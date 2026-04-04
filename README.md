@@ -105,9 +105,9 @@ Ansible playbooks to automate the installation and configuration of a PostgreSQL
 
 Network: $CLUSTER_NETWORK
   Cluster Nodes:
-    - pg-node1: $NODE1_IP  (PostgreSQL + Patroni + etcd + PgBouncer)
-    - pg-node2: $NODE2_IP  (PostgreSQL + Patroni + etcd + PgBouncer)
-    - pg-node3: $NODE3_IP  (PostgreSQL + Patroni + etcd + PgBouncer)
+    - pg-node1: $NODE1_PRIVATE_IP  (PostgreSQL + Patroni + etcd + PgBouncer)
+    - pg-node2: $NODE2_PRIVATE_IP  (PostgreSQL + Patroni + etcd + PgBouncer)
+    - pg-node3: $NODE3_PRIVATE_IP  (PostgreSQL + Patroni + etcd + PgBouncer)
   Backup Server:
     - pg-backup: $BACKUP_SERVER_IP  (pgBackRest repository)
   Monitoring:
@@ -137,9 +137,9 @@ Network: $CLUSTER_NETWORK
 
 | Host | Role | Specs |
 |------|------|-------|
-| `pg-node1` (`$NODE1_IP`) | PostgreSQL + Patroni + etcd + PgBouncer | 6 vCPU / 16 GB RAM |
-| `pg-node2` (`$NODE2_IP`) | PostgreSQL + Patroni + etcd + PgBouncer | 6 vCPU / 16 GB RAM |
-| `pg-node3` (`$NODE3_IP`) | PostgreSQL + Patroni + etcd + PgBouncer | 6 vCPU / 16 GB RAM |
+| `pg-node1` (`$NODE1_PRIVATE_IP`) | PostgreSQL + Patroni + etcd + PgBouncer | 6 vCPU / 16 GB RAM |
+| `pg-node2` (`$NODE2_PRIVATE_IP`) | PostgreSQL + Patroni + etcd + PgBouncer | 6 vCPU / 16 GB RAM |
+| `pg-node3` (`$NODE3_PRIVATE_IP`) | PostgreSQL + Patroni + etcd + PgBouncer | 6 vCPU / 16 GB RAM |
 | `pg-backup` (`$BACKUP_SERVER_IP`) | pgBackRest repository server | 4 vCPU / 8 GB RAM |
 | `monitoring` (`$MONITORING_SERVER_IP`) | Prometheus + Grafana | 4 vCPU / 8 GB RAM |
 
@@ -208,9 +208,9 @@ nano .env  # or vim, vi, code, etc.
 
 ```bash
 # Node IP Addresses
-NODE1_IP=10.0.0.11
-NODE2_IP=10.0.0.12
-NODE3_IP=10.0.0.13
+NODE1_PRIVATE_IP=10.0.0.11
+NODE2_PRIVATE_IP=10.0.0.12
+NODE3_PRIVATE_IP=10.0.0.13
 
 # PostgreSQL Passwords (REQUIRED - change these!)
 POSTGRESQL_SUPERUSER_PASSWORD=your_strong_password_here
@@ -275,7 +275,7 @@ ansible-playbook playbooks/deploy-backup.yml -i inventory/hosts.yml
 
 ```bash
 # Check Patroni cluster status
-ssh root@${NODE1_IP} "patronictl -c /etc/patroni/patroni.yml list"
+ssh root@${NODE1_PRIVATE_IP} "patronictl -c /etc/patroni/patroni.yml list"
 
 # Expected output:
 # + Cluster: postgres (7441307089994301601) ----+---------+----+-----------+
@@ -287,10 +287,10 @@ ssh root@${NODE1_IP} "patronictl -c /etc/patroni/patroni.yml list"
 # +----------+---------------+---------+---------+----+-----------+
 
 # Check etcd cluster health
-ETCDCTL_API=3 etcdctl --endpoints=http://${NODE1_IP}:2379,http://${NODE2_IP}:2379,http://${NODE3_IP}:2379 endpoint health
+ETCDCTL_API=3 etcdctl --endpoints=http://${NODE1_PRIVATE_IP}:2379,http://${NODE2_PRIVATE_IP}:2379,http://${NODE3_PRIVATE_IP}:2379 endpoint health
 
 # Test PgBouncer connection
-PGPASSWORD="${POSTGRESQL_SUPERUSER_PASSWORD}" psql -p 6432 -U postgres -h ${NODE1_IP} -c 'SELECT version();' postgres
+PGPASSWORD="${POSTGRESQL_SUPERUSER_PASSWORD}" psql -p 6432 -U postgres -h ${NODE1_PRIVATE_IP} -c 'SELECT version();' postgres
 ```
 
 ## ⚙️ Configuration
@@ -316,7 +316,7 @@ All cluster settings are managed through `.env`.
 set -a && source .env && set +a
 
 # Verify loaded
-echo "Node IPs: ${NODE1_IP}, ${NODE2_IP}, ${NODE3_IP}"
+echo "Node IPs: ${NODE1_PRIVATE_IP}, ${NODE2_PRIVATE_IP}, ${NODE3_PRIVATE_IP}"
 echo "PostgreSQL Version: ${POSTGRESQL_VERSION}"
 ```
 
@@ -734,16 +734,16 @@ ansible-playbook playbooks/switchover.yml -i inventory/hosts.yml
 
 ```bash
 # Stop Patroni on current leader
-ssh root@${NODE1_IP} "systemctl stop patroni"
+ssh root@${NODE1_PRIVATE_IP} "systemctl stop patroni"
 
 # Wait 30-45 seconds for automatic failover
 sleep 40
 
 # Check new cluster state
-ssh root@${NODE2_IP} "patronictl -c /etc/patroni/patroni.yml list"
+ssh root@${NODE2_PRIVATE_IP} "patronictl -c /etc/patroni/patroni.yml list"
 
 # Restart failed node (auto-joins as replica)
-ssh root@${NODE1_IP} "systemctl start patroni"
+ssh root@${NODE1_PRIVATE_IP} "systemctl start patroni"
 ```
 
 ### Rolling Updates
@@ -781,21 +781,21 @@ pgBackRest provides enterprise-grade backup with WAL archiving, point-in-time re
 │                    pgBackRest Backup Architecture                    │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                      │
-│  pg-node1 ($NODE1_IP)          pg-backup ($BACKUP_SERVER_IP)        │
+│  pg-node1 ($NODE1_PRIVATE_IP)          pg-backup ($BACKUP_SERVER_IP)        │
 │  ┌────────────────────┐        ┌──────────────────────────┐         │
 │  │ PostgreSQL Primary  │──SSH──→│  pgBackRest Repository   │         │
 │  │ archive_command:    │        │  /var/lib/pgbackrest     │         │
 │  │   pgbackrest push   │        │                          │         │
 │  └────────────────────┘        │  ┌────────────────────┐  │         │
 │                                 │  │ Full Backups       │  │         │
-│  pg-node2 ($NODE2_IP)          │  │ Diff Backups       │  │         │
+│  pg-node2 ($NODE2_PRIVATE_IP)          │  │ Diff Backups       │  │         │
 │  ┌────────────────────┐        │  │ Incr Backups       │  │         │
 │  │ PostgreSQL Replica  │──SSH──→│  │ WAL Archive        │  │         │
 │  │ restore_command:    │        │  └────────────────────┘  │         │
 │  │   pgbackrest get    │        │                          │         │
 │  └────────────────────┘        │  Cron Schedules:         │         │
 │                                 │   Sun 01:00 → Full      │         │
-│  pg-node3 ($NODE3_IP)          │   Mon-Sat 01:00 → Diff  │         │
+│  pg-node3 ($NODE3_PRIVATE_IP)          │   Mon-Sat 01:00 → Diff  │         │
 │  ┌────────────────────┐        │   Every 6h → Incremental │         │
 │  │ PostgreSQL Replica  │──SSH──→│                          │         │
 │  │ restore_command:    │        └──────────────────────────┘         │
@@ -889,23 +889,23 @@ Stop Patroni on all nodes, then restore from backup:
 
 ```bash
 # 1. Stop Patroni on all nodes
-ssh root@$NODE1_IP "systemctl stop patroni"
-ssh root@$NODE2_IP "systemctl stop patroni"
-ssh root@$NODE3_IP "systemctl stop patroni"
+ssh root@$NODE1_PRIVATE_IP "systemctl stop patroni"
+ssh root@$NODE2_PRIVATE_IP "systemctl stop patroni"
+ssh root@$NODE3_PRIVATE_IP "systemctl stop patroni"
 
 # 2. Clear existing data on primary
-ssh root@$NODE1_IP "rm -rf /var/lib/postgresql/18/data/*"
+ssh root@$NODE1_PRIVATE_IP "rm -rf /var/lib/postgresql/18/data/*"
 
 # 3. Restore from latest backup
-ssh root@$NODE1_IP "sudo -u postgres pgbackrest --stanza=main --delta restore"
+ssh root@$NODE1_PRIVATE_IP "sudo -u postgres pgbackrest --stanza=main --delta restore"
 
 # 4. Start Patroni on primary first
-ssh root@$NODE1_IP "systemctl start patroni"
+ssh root@$NODE1_PRIVATE_IP "systemctl start patroni"
 
 # 5. Wait for primary to be ready, then start replicas
 sleep 30
-ssh root@$NODE2_IP "systemctl start patroni"
-ssh root@$NODE3_IP "systemctl start patroni"
+ssh root@$NODE2_PRIVATE_IP "systemctl start patroni"
+ssh root@$NODE3_PRIVATE_IP "systemctl start patroni"
 ```
 
 #### Point-in-Time Recovery (PITR)
@@ -914,7 +914,7 @@ Restore to a specific point in time:
 
 ```bash
 # Restore to a specific timestamp
-ssh root@$NODE1_IP "sudo -u postgres pgbackrest --stanza=main \
+ssh root@$NODE1_PRIVATE_IP "sudo -u postgres pgbackrest --stanza=main \
   --type=time \"--target=2026-03-21 14:30:00+07\" \
   --target-action=promote \
   --delta restore"
@@ -924,7 +924,7 @@ ssh root@$NODE1_IP "sudo -u postgres pgbackrest --stanza=main \
 
 ```bash
 # Restore only specific databases
-ssh root@$NODE1_IP "sudo -u postgres pgbackrest --stanza=main \
+ssh root@$NODE1_PRIVATE_IP "sudo -u postgres pgbackrest --stanza=main \
   --db-include=identity --db-include=keycloak \
   --delta restore"
 ```
@@ -941,7 +941,7 @@ Verify WAL archiving is working:
 
 ```bash
 # Check archive status on PG node
-ssh root@$NODE1_IP "sudo -u postgres psql -c \"SELECT * FROM pg_stat_archiver;\""
+ssh root@$NODE1_PRIVATE_IP "sudo -u postgres psql -c \"SELECT * FROM pg_stat_archiver;\""
 
 # Check WAL archive on backup server
 ssh root@$BACKUP_SERVER_IP "sudo -u pgbackrest pgbackrest --stanza=main info"
@@ -1168,7 +1168,7 @@ POSTGRESQL_SSL_CA_FILE=/path/to/ca.crt
 set -a && source .env && set +a
 
 # Verify variables are loaded
-echo $NODE1_IP
+echo $NODE1_PRIVATE_IP
 echo $POSTGRESQL_VERSION
 
 # Then run ansible

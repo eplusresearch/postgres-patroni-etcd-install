@@ -1,0 +1,93 @@
+---
+# ProxySQL Role - Cài đặt ProxySQL
+
+# =============================================================================
+# ADD PROXYSQL REPOSITORY
+# =============================================================================
+- name: Import ProxySQL GPG key (Debian/Ubuntu)
+  apt_key:
+    url: https://repo.proxysql.com/ProxySQL/proxysql-3.0.x/repo_pub_key.gpg
+    dest: /etc/apt/trusted.gpg.d/proxysql-3.0.x-keyring.gpg
+    state: present
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Add ProxySQL repository (Debian/Ubuntu)
+  apt_repository:
+    repo: "deb https://repo.proxysql.com/ProxySQL/proxysql-3.0.x/{{ ansible_distribution_release }}/ ./"
+    state: present
+    filename: proxysql
+    update_cache: yes
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Add ProxySQL YUM repository (RedHat)
+  yum_repository:
+    name: proxysql_repo # Tương ứng với [proxysql_repo]
+    description: ProxySQL repository # Tương ứng với name=...
+    baseurl: https://repo.proxysql.com/ProxySQL/proxysql-3.0.x/centos/$releasever
+    gpgcheck: yes # Tương ứng với gpgcheck=1
+    gpgkey: https://repo.proxysql.com/ProxySQL/proxysql-3.0.x/repo_pub_key
+    file: proxysql # Tự động tạo file /etc/yum.repos.d/proxysql.repo
+    state: present
+  when: ansible_os_family == "RedHat"
+
+
+
+# =============================================================================
+# INSTALL POXYSQL
+# =============================================================================
+- name: Install ProxySQL package (Debian/Ubuntu)
+  apt:
+    name: proxysql
+    state: present
+    update_cache: yes
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Install ProxySQL package (RedHat)
+  dnf:
+    name: proxysql
+    state: present
+    update_cache: yes
+  when: ansible_os_family == "RedHat"
+
+
+# =============================================================================
+# CREATE DIRECTORIES
+# =============================================================================
+- name: Create ProxySQL log directory
+  file:
+    path: "{{ lookup('env', 'PROXYSQL_LOG_DIR') | default('/var/log/proxysql', true) }}"
+    state: directory
+    owner: proxysql
+    group: proxysql
+    mode: "0755"
+
+# =============================================================================
+# CONFIGURE FIREWALL FOR PROXYSQL
+# =============================================================================
+- name: Configure UFW - Allow ProxySQL admin port
+  ufw:
+    rule: allow
+    port: "{{ proxysql_admin_port }}/tcp"
+    proto: tcp
+  when: firewall_type == "ufw"
+
+- name: Configure firewalld - Allow ProxySQL
+  firewalld:
+    port: "{{ proxysql_listen_port }}/tcp"
+    permanent: yes
+    state: enabled
+    immediate: yes
+  when: firewall_type == "firewalld"
+
+# =============================================================================
+# VERIFY INSTALLATION
+# =============================================================================
+- name: Verify ProxySQL installation
+  shell: "proxysql --version"
+  register: proxysql_version
+  changed_when: false
+  failed_when: false
+
+- name: Display ProxySQL version
+  debug:
+    msg: "ProxySQL version: {{ proxysql_version }}"

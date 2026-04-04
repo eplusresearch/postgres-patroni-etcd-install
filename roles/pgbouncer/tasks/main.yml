@@ -6,16 +6,16 @@
 # =============================================================================
 - name: Install PgBouncer (Debian/Ubuntu)
   apt:
-    name:
-      - pgbouncer
+    # Nối phiên bản bằng dấu =
+    name: "pgbouncer={{ pgbouncer_version }}"
     state: present
     update_cache: yes
-  when: ansible_os_family == "Debian"
+  when: ansible_facts['os_family'] == "Debian"
 
 - name: Install PgBouncer (RedHat)
   dnf:
-    name:
-      - pgbouncer
+    # Nối phiên bản bằng dấu -
+    name: "pgbouncer-{{ pgbouncer_version }}"
     state: present
   when: ansible_os_family == "RedHat"
 

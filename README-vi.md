@@ -171,9 +171,9 @@ nano .env  # hoặc vim, vi, code, etc.
 
 ```bash
 # Địa chỉ IP các Node
-NODE1_IP=10.0.0.11
-NODE2_IP=10.0.0.12
-NODE3_IP=10.0.0.13
+NODE1_PRIVATE_IP=10.148.1.111
+NODE2_PRIVATE_IP=10.148.1.112
+NODE3_PRIVATE_IP=10.148.1.113
 
 # Mật khẩu PostgreSQL (BẮT BUỘC - thay đổi ngay!)
 POSTGRESQL_SUPERUSER_PASSWORD=mat_khau_manh_cua_ban
@@ -196,21 +196,37 @@ Chỉnh sửa `inventory/hosts.yml`:
 
 ```yaml
 all:
+  vars:
+    ansible_user: root
+    ansible_ssh_private_key_file: ~/.ssh/id_rsa
+    ansible_python_interpreter: /usr/bin/python3
+
   children:
+    # PostgreSQL cluster nodes (3 nodes)
     postgres:
       hosts:
-        pg-node1:
-          ansible_host: 10.0.0.11
-          patroni_name: node1
-          etcd_name: etcd1
-        pg-node2:
-          ansible_host: 10.0.0.12
-          patroni_name: node2
-          etcd_name: etcd2
-        pg-node3:
-          ansible_host: 10.0.0.13
-          patroni_name: node3
-          etcd_name: etcd3
+        ecogreen-postgres-1:
+          ansible_host: 10.148.1.111
+          patroni_name: ecogreen-patroni-dev-1
+          etcd_name: ecogreen-etcd-dev-1
+        ecogreen-postgres-2:
+          ansible_host: 10.148.1.112
+          patroni_name: ecogreen-patroni-dev-2
+          etcd_name: ecogreen-etcd-dev-2
+        ecogreen-postgres-3:
+          ansible_host: 10.148.1.113
+          patroni_name: ecogreen-patroni-dev-3
+          etcd_name: ecogreen-etcd-dev-3
+          
+    backup:
+      hosts:
+        ecogreen-database-backup-dev:
+          ansible_host: 10.148.1.200
+          
+    monitor:
+      hosts:
+        ecogreen-database-monitor-dev:
+          ansible_host: 10.148.1.201
 ```
 
 ### 4. Triển khai Cluster
@@ -235,7 +251,7 @@ ansible-playbook playbooks/site.yml -i inventory/hosts.yml --tags pgbouncer
 
 ```bash
 # Kiểm tra trạng thái Patroni cluster
-ssh root@${NODE1_IP} "patronictl -c /etc/patroni/patroni.yml list"
+ssh root@${NODE1_PRIVATE_IP} "patronictl -c /etc/patroni/patroni.yml list"
 
 # Kết quả mong đợi:
 # + Cluster: postgres (7441307089994301601) ----+---------+----+-----------+
@@ -247,10 +263,10 @@ ssh root@${NODE1_IP} "patronictl -c /etc/patroni/patroni.yml list"
 # +----------+---------------+---------+---------+----+-----------+
 
 # Kiểm tra sức khỏe etcd cluster
-ETCDCTL_API=3 etcdctl --endpoints=http://${NODE1_IP}:2379,http://${NODE2_IP}:2379,http://${NODE3_IP}:2379 endpoint health
+ETCDCTL_API=3 etcdctl --endpoints=http://${NODE1_PRIVATE_IP}:2379,http://${NODE2_PRIVATE_IP}:2379,http://${NODE3_PRIVATE_IP}:2379 endpoint health
 
 # Test kết nối PgBouncer
-PGPASSWORD="${POSTGRESQL_SUPERUSER_PASSWORD}" psql -p 6432 -U postgres -h ${NODE1_IP} -c 'SELECT version();' postgres
+PGPASSWORD="${POSTGRESQL_SUPERUSER_PASSWORD}" psql -p 6432 -U postgres -h ${NODE1_PRIVATE_IP} -c 'SELECT version();' postgres
 ```
 
 ## ⚙️ Cấu hình
@@ -275,7 +291,7 @@ Tất cả cài đặt cluster được quản lý qua `.env`.
 set -a && source .env && set +a
 
 # Xác minh đã load
-echo "Node IPs: ${NODE1_IP}, ${NODE2_IP}, ${NODE3_IP}"
+echo "Node IPs: ${NODE1_PRIVATE_IP}, ${NODE2_PRIVATE_IP}, ${NODE3_PRIVATE_IP}"
 echo "PostgreSQL Version: ${POSTGRESQL_VERSION}"
 ```
 
@@ -468,16 +484,16 @@ ansible-playbook playbooks/switchover.yml -i inventory/hosts.yml
 
 ```bash
 # Stop Patroni trên leader hiện tại
-ssh root@${NODE1_IP} "systemctl stop patroni"
+ssh root@${NODE1_PRIVATE_IP} "systemctl stop patroni"
 
 # Chờ 30-45 giây để tự động failover
 sleep 40
 
 # Kiểm tra trạng thái cluster mới
-ssh root@${NODE2_IP} "patronictl -c /etc/patroni/patroni.yml list"
+ssh root@${NODE2_PRIVATE_IP} "patronictl -c /etc/patroni/patroni.yml list"
 
 # Khởi động lại node bị lỗi (tự động join như replica)
-ssh root@${NODE1_IP} "systemctl start patroni"
+ssh root@${NODE1_PRIVATE_IP} "systemctl start patroni"
 ```
 
 ### Rolling Updates
@@ -600,7 +616,7 @@ ssh root@10.0.0.11 "tail -f /var/log/pgbouncer/pgbouncer.log"
 
 ```bash
 # Kiểm tra tất cả dịch vụ trên một node
-ssh root@$NODE1_IP "
+ssh root@$NODE1_PRIVATE_IP "
   systemctl status postgresql@18-main
   systemctl status patroni
   systemctl status etcd
@@ -694,7 +710,7 @@ POSTGRESQL_SSL_CA_FILE=/path/to/ca.crt
 set -a && source .env && set +a
 
 # Xác minh biến đã load
-echo $NODE1_IP
+echo $NODE1_PRIVATE_IP
 echo $POSTGRESQL_VERSION
 
 # Sau đó chạy ansible

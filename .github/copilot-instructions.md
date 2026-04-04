@@ -33,12 +33,39 @@ Never hardcode values in templates or tasks - always reference variables from `i
 
 Three-node cluster defined in `inventory/hosts.yml`:
 ```yaml
-postgres:
-  hosts:
-    pg-node1:
-      ansible_host: $NODE1_IP
-      patroni_name: node1
-      etcd_name: etcd1
+all:
+  vars:
+    ansible_user: root
+    ansible_ssh_private_key_file: ~/.ssh/id_rsa
+    ansible_python_interpreter: /usr/bin/python3
+
+  children:
+    # PostgreSQL cluster nodes (3 nodes)
+    postgres:
+      hosts:
+        ecogreen-postgres-1:
+          ansible_host: 10.148.1.111
+          patroni_name: ecogreen-patroni-dev-1
+          etcd_name: ecogreen-etcd-dev-1
+        ecogreen-postgres-2:
+          ansible_host: 10.148.1.112
+          patroni_name: ecogreen-patroni-dev-2
+          etcd_name: ecogreen-etcd-dev-2
+        ecogreen-postgres-3:
+          ansible_host: 10.148.1.113
+          patroni_name: ecogreen-patroni-dev-3
+          etcd_name: ecogreen-etcd-dev-3
+          
+    backup:
+      hosts:
+        ecogreen-database-backup-dev:
+          ansible_host: 10.148.1.200
+          
+    monitor:
+      hosts:
+        ecogreen-database-monitor-dev:
+          ansible_host: 10.148.1.201
+
 ```
 
 Each node runs ALL services: PostgreSQL, Patroni, etcd, PgBouncer. Use `groups['postgres']` for iterating all nodes.
@@ -75,7 +102,7 @@ etcd3:
   hosts: {% for host in groups['postgres'] %}{{ hostvars[host]['ansible_host'] }}:{{ etcd_client_port }}{% if not loop.last %},{% endif %}{% endfor %}
 ```
 
-Generates: `$NODE1_IP:2379,$NODE2_IP:2379,$NODE3_IP:2379`
+Generates: `$NODE1_PRIVATE_IP:2379,$NODE2_PRIVATE_IP:2379,$NODE3_PRIVATE_IP:2379`
 
 ### PgBouncer ↔ PostgreSQL Integration
 
@@ -106,7 +133,7 @@ Used for monitoring integration, alerts, or service reconfiguration on role chan
 2. Load environment: `set -a && source .env && set +a`
 3. Dry run: `ansible-playbook playbooks/site.yml --check --diff`
 4. Execute: `ansible-playbook playbooks/site.yml --tags "patroni"`
-5. Verify: `ssh root@$NODE1_IP "patronictl -c /etc/patroni/patroni.yml list"`
+5. Verify: `ssh root@$NODE1_PRIVATE_IP "patronictl -c /etc/patroni/patroni.yml list"`
 
 ### Adding New Role
 
@@ -193,7 +220,7 @@ set -a && source .env && set +a
 ansible-playbook playbooks/site.yml -i inventory/hosts.yml
 
 # Check cluster status
-ssh root@$NODE1_IP "patronictl -c /etc/patroni/patroni.yml list"
+ssh root@$NODE1_PRIVATE_IP "patronictl -c /etc/patroni/patroni.yml list"
 
 # Switchover to specific node
 ansible-playbook playbooks/switchover.yml -e "target_node=node2"
@@ -225,9 +252,9 @@ When updating component versions, check:
 
 | Host | Role | Specs |
 |------|------|-------|
-| `pg-node1` (`$NODE1_IP`) | PostgreSQL + Patroni + etcd + PgBouncer | 6 vCPU / 16 GB RAM |
-| `pg-node2` (`$NODE2_IP`) | PostgreSQL + Patroni + etcd + PgBouncer | 6 vCPU / 16 GB RAM |
-| `pg-node3` (`$NODE3_IP`) | PostgreSQL + Patroni + etcd + PgBouncer | 6 vCPU / 16 GB RAM |
+| `pg-node1` (`$NODE1_PRIVATE_IP`) | PostgreSQL + Patroni + etcd + PgBouncer | 6 vCPU / 16 GB RAM |
+| `pg-node2` (`$NODE2_PRIVATE_IP`) | PostgreSQL + Patroni + etcd + PgBouncer | 6 vCPU / 16 GB RAM |
+| `pg-node3` (`$NODE3_PRIVATE_IP`) | PostgreSQL + Patroni + etcd + PgBouncer | 6 vCPU / 16 GB RAM |
 | `pg-backup` (`$BACKUP_SERVER_IP`) | Dedicated backup server (pgBackRest) | 4 vCPU / 8 GB RAM |
 | `monitoring` (`$MONITORING_SERVER_IP`) | Prometheus + Grafana | 4 vCPU / 8 GB RAM |
 
@@ -239,8 +266,8 @@ All IPs are defined **exclusively in `.env`** (gitignored). Inventory `hosts.yml
 - `inventory/hosts.yml` and `hosts.yml.example` — use `lookup('env', ...)` 
 - `inventory/group_vars/all.yml` — defaults must use placeholder IPs (`10.0.0.x`)
 - `.env.example` — use placeholder IPs (`10.0.0.x`), never real ones
-- Documentation (`.md` files) — use `$NODE1_IP`, `$CLUSTER_NETWORK` env var references
-- Scripts — use env vars (`$NODE1_IP`) or accept parameters, never hardcode
+- Documentation (`.md` files) — use `$NODE1_PRIVATE_IP`, `$CLUSTER_NETWORK` env var references
+- Scripts — use env vars (`$NODE1_PRIVATE_IP`) or accept parameters, never hardcode
 
 **Only `.env`** (which is in `.gitignore`) should contain real IP addresses.
 
@@ -248,9 +275,9 @@ All IPs are defined **exclusively in `.env`** (gitignored). Inventory `hosts.yml
 
 ```bash
 # .env — the ONLY place with real IPs
-NODE1_IP=<real-ip>        NODE1_NAME=pg-node1
-NODE2_IP=<real-ip>        NODE2_NAME=pg-node2
-NODE3_IP=<real-ip>        NODE3_NAME=pg-node3
+NODE1_PRIVATE_IP=<real-ip>        NODE1_NAME=pg-node1
+NODE2_PRIVATE_IP=<real-ip>        NODE2_NAME=pg-node2
+NODE3_PRIVATE_IP=<real-ip>        NODE3_NAME=pg-node3
 BACKUP_SERVER_IP=<real-ip>      BACKUP_SERVER_NAME=pg-backup
 MONITORING_SERVER_IP=<real-ip>  MONITORING_SERVER_NAME=monitoring
 CLUSTER_NETWORK=<real-cidr>     CLUSTER_NETMASK=255.255.255.0

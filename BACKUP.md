@@ -309,15 +309,15 @@ delta=y
 archive-async=y
 
 [main]
-pg1-host=$NODE1_IP
+pg1-host=$NODE1_PRIVATE_IP
 pg1-host-user=postgres
 pg1-path=/var/lib/postgresql/18/data
 pg1-port=5432
-pg2-host=$NODE2_IP
+pg2-host=$NODE2_PRIVATE_IP
 pg2-host-user=postgres
 pg2-path=/var/lib/postgresql/18/data
 pg2-port=5432
-pg3-host=$NODE3_IP
+pg3-host=$NODE3_PRIVATE_IP
 pg3-host-user=postgres
 pg3-path=/var/lib/postgresql/18/data
 pg3-port=5432
@@ -438,33 +438,33 @@ flowchart TD
 
 ```bash
 # 1. Stop Patroni on all nodes
-ssh root@$NODE1_IP "systemctl stop patroni"
-ssh root@$NODE2_IP "systemctl stop patroni"
-ssh root@$NODE3_IP "systemctl stop patroni"
+ssh root@$NODE1_PRIVATE_IP "systemctl stop patroni"
+ssh root@$NODE2_PRIVATE_IP "systemctl stop patroni"
+ssh root@$NODE3_PRIVATE_IP "systemctl stop patroni"
 
 # 2. Clear old data on primary
-ssh root@$NODE1_IP "rm -rf /var/lib/postgresql/18/data/*"
+ssh root@$NODE1_PRIVATE_IP "rm -rf /var/lib/postgresql/18/data/*"
 
 # 3. Restore from latest backup
-ssh root@$NODE1_IP "sudo -u postgres pgbackrest --stanza=main --delta restore"
+ssh root@$NODE1_PRIVATE_IP "sudo -u postgres pgbackrest --stanza=main --delta restore"
 
 # 4. Start primary first
-ssh root@$NODE1_IP "systemctl start patroni"
+ssh root@$NODE1_PRIVATE_IP "systemctl start patroni"
 
 # 5. Wait for primary to be ready, start replicas
 sleep 30
-ssh root@$NODE2_IP "systemctl start patroni"
-ssh root@$NODE3_IP "systemctl start patroni"
+ssh root@$NODE2_PRIVATE_IP "systemctl start patroni"
+ssh root@$NODE3_PRIVATE_IP "systemctl start patroni"
 
 # 6. Verify cluster
-ssh root@$NODE1_IP "patronictl -c /etc/patroni/patroni.yml list"
+ssh root@$NODE1_PRIVATE_IP "patronictl -c /etc/patroni/patroni.yml list"
 ```
 
 ### Point-in-Time Recovery (PITR)
 
 ```bash
 # Restore to a specific point in time
-ssh root@$NODE1_IP "sudo -u postgres pgbackrest --stanza=main \
+ssh root@$NODE1_PRIVATE_IP "sudo -u postgres pgbackrest --stanza=main \
   --type=time \"--target=2026-03-21 14:30:00+07\" \
   --target-action=promote \
   --delta restore"
@@ -474,7 +474,7 @@ ssh root@$NODE1_IP "sudo -u postgres pgbackrest --stanza=main \
 
 ```bash
 # Restore only identity and keycloak databases
-ssh root@$NODE1_IP "sudo -u postgres pgbackrest --stanza=main \
+ssh root@$NODE1_PRIVATE_IP "sudo -u postgres pgbackrest --stanza=main \
   --db-include=identity --db-include=keycloak \
   --delta restore"
 ```
@@ -521,10 +521,10 @@ roles/pgbackrest/
 
 ```bash
 # Archive status on PG node
-ssh root@$NODE1_IP "sudo -u postgres psql -c 'SELECT * FROM pg_stat_archiver;'"
+ssh root@$NODE1_PRIVATE_IP "sudo -u postgres psql -c 'SELECT * FROM pg_stat_archiver;'"
 
 # Check archive_mode
-ssh root@$NODE1_IP "sudo -u postgres psql -c 'SHOW archive_mode;'"
+ssh root@$NODE1_PRIVATE_IP "sudo -u postgres psql -c 'SHOW archive_mode;'"
 ```
 
 ### Backup Failure
@@ -534,7 +534,7 @@ ssh root@$NODE1_IP "sudo -u postgres psql -c 'SHOW archive_mode;'"
 ssh root@$BACKUP_SERVER_IP "tail -100 /var/log/pgbackrest/cron-full.log"
 
 # Check SSH connectivity
-ssh root@$BACKUP_SERVER_IP "sudo -u pgbackrest ssh postgres@$NODE1_IP hostname"
+ssh root@$BACKUP_SERVER_IP "sudo -u pgbackrest ssh postgres@$NODE1_PRIVATE_IP hostname"
 
 # Check stanza
 ssh root@$BACKUP_SERVER_IP "sudo -u pgbackrest pgbackrest --stanza=main check"

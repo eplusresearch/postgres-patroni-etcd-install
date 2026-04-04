@@ -23,9 +23,9 @@
           PostgreSQL HA Cluster Deployment
           ============================================
           Target hosts: {{ ansible_play_hosts | join(', ') }}
-          PostgreSQL version: {{ postgresql_version | default('16') }}
+          PostgreSQL version: {{ postgresql_version | default('17') }}
           etcd version: {{ etcd_version | default('3.5.11') }}
-          Patroni version: {{ patroni_version | default('3.2.0') }}
+          Patroni version: {{ patroni_version | default('4.1.0') }}
           Cluster name: {{ patroni_scope | default('postgres') }}
           ============================================
       run_once: true
@@ -92,6 +92,21 @@
     - role: patroni
 
 # =============================================================================
+# PROXYSQL CONNECTION POOLER
+# =============================================================================
+- name: Setup ProxySQL load balancer
+  hosts: postgres
+  become: yes
+  gather_facts: yes
+  tags:
+    - proxysql
+    - pooling
+
+  roles:
+    - role: proxysql
+
+
+# =============================================================================
 # PGBOUNCER CONNECTION POOLER
 # =============================================================================
 - name: Setup PgBouncer connection pooler
@@ -125,17 +140,17 @@
 # =============================================================================
 # HAProxy is disabled - Applications connect directly to PgBouncer
 # Uncomment and set haproxy_enabled: true in all.yml if needed
-#- name: Setup HAProxy load balancer
-#  hosts: haproxy
-#  become: yes
-#  gather_facts: yes
-#  tags:
-#    - haproxy
-#    - loadbalancer
-#
-#  roles:
-#    - role: haproxy
-#  when: haproxy_enabled | default(false)
+- name: Setup HAProxy load balancer
+  hosts: haproxy
+  become: yes
+  gather_facts: yes
+  tags:
+    - haproxy
+    - loadbalancer
+
+  roles:
+    - role: haproxy
+      when: haproxy_enabled | default(false)
 
 # =============================================================================
 # POST DEPLOYMENT VERIFICATION
@@ -223,3 +238,22 @@
 
           ============================================
       run_once: true
+
+# =============================================================================
+# PLAY CUỐI CÙNG: KHỞI TẠO DỮ LIỆU CỤM (CLUSTER INITIALIZATION)
+# =============================================================================
+    - name: Create PostgreSQL admin user
+      community.postgresql.postgresql_user:
+        name: "{{ lookup('env', 'POSTGRESQL_ADMIN_USER') }}"
+        password: "{{ lookup('env', 'POSTGRESQL_ADMIN_PASSWORD') }}"
+        role_attr_flags: "SUPERUSER,CREATEDB,CREATEROLE"
+        login_host: "{{ item }}"
+        login_user: "postgres"
+        login_password: "{{ lookup('env', 'POSTGRESQL_SUPERUSER_PASSWORD') }}"
+        port: 5432
+        state: present
+      loop: "{{ groups['postgres'] }}"
+      delegate_to: localhost
+      run_once: true
+      # Bỏ qua lỗi Read-only một cách êm đẹp
+      ignore_errors: yes

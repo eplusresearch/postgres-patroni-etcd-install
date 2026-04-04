@@ -6,6 +6,7 @@
 # =============================================================================
 # NETWORK SETTINGS
 # =============================================================================
+cluster_name: "{{ lookup('env', 'CLUSTER_NAME') | default('postgres-ha', true) }}"
 cluster_network: "{{ lookup('env', 'CLUSTER_NETWORK') | default('10.0.0.0/24', true) }}"
 cluster_netmask: "{{ lookup('env', 'CLUSTER_NETMASK') | default('255.255.255.0', true) }}"
 vpn_network: "{{ lookup('env', 'VPN_NETWORK') | default('', true) }}"
@@ -139,6 +140,29 @@ pgbackrest_diff_schedule: "{{ lookup('env', 'PGBACKREST_DIFF_SCHEDULE') | defaul
 pgbackrest_incr_schedule: "{{ lookup('env', 'PGBACKREST_INCR_SCHEDULE') | default('0 */6 * * *', true) }}"
 
 # =============================================================================
+# PROXYSQL SETTINGS
+# =============================================================================
+proxysql_enabled: "{{ lookup('env', 'PROXYSQL_ENABLED') | default('false', true) | bool }}"
+proxysql_version: "{{ lookup('env', 'PROXYSQL_VERSION') | default('2.0.15', true) }}"
+proxysql_config_dir: "{{ lookup('env', 'PROXYSQL_CONFIG_DIR') | default('/etc/proxysql', true) }}"
+proxysql_data_dir: "{{ lookup('env', 'PROXYSQL_DATA_DIR') | default('/var/lib/proxysql', true) }}"
+proxysql_log_dir: "{{ lookup('env', 'PROXYSQL_LOG_DIR') | default('/var/log/proxysql', true) }}"
+proxysql_listen_port: "{{ lookup('env', 'PROXYSQL_LISTEN_PORT') | default('6133', true) | int }}"
+proxysql_admin_port: "{{ lookup('env', 'PROXYSQL_ADMIN_PORT') | default('6132', true) | int }}"
+proxysql_listen_addr: "{{ lookup('env', 'PROXYSQL_LISTEN_ADDR') | default('*', true) }}"
+proxysql_admin_user: "{{ lookup('env', 'PROXYSQL_ADMIN_USER') | default('admin', true) }}"
+proxysql_admin_password: "{{ lookup('env', 'PROXYSQL_ADMIN_PASSWORD') | default('admin', true) }}"
+proxysql_postgresql_port: "{{ lookup('env', 'PROXYSQL_POSTGRESQL_PORT') | default('5432', true) | int }}"
+proxysql_read_write_hostgroup: "{{ lookup('env', 'PROXYSQL_READ_WRITE_HOSTGROUP') | default('10', true) | int }}"
+proxysql_read_only_hostgroup: "{{ lookup('env', 'PROXYSQL_READ_ONLY_HOSTGROUP') | default('20', true) | int }}"
+proxysql_max_connections: "{{ lookup('env', 'PROXYSQL_MAX_CONNECTIONS') | default('1000', true) | int }}"
+proxysql_default_query_delay: "{{ lookup('env', 'PROXYSQL_DEFAULT_QUERY_DELAY') | default('0', true) | int }}"
+proxysql_default_query_timeout: "{{ lookup('env', 'PROXYSQL_DEFAULT_QUERY_TIMEOUT') | default('10000', true) | int }}"
+proxysql_default_query_retries: "{{ lookup('env', 'PROXYSQL_DEFAULT_QUERY_RETRIES') | default('3', true) | int }}"
+proxysql_default_query_retry_on_timeout: "{{ lookup('env', 'PROXYSQL_DEFAULT_QUERY_RETRY_ON_TIMEOUT') | default('true', true) | bool }}"
+proxysql_debug: "{{ lookup('env', 'PROXYSQL_DEBUG') | default('false', true) | bool }}"
+
+# =============================================================================
 # TELEGRAM NOTIFICATION SETTINGS
 # =============================================================================
 telegram_enabled: "{{ lookup('env', 'TELEGRAM_ENABLED') | default('false', true) | bool }}"
@@ -146,13 +170,49 @@ telegram_bot_token: "{{ lookup('env', 'TELEGRAM_BOT_TOKEN') | default('', true) 
 telegram_chat_id: "{{ lookup('env', 'TELEGRAM_CHAT_ID') | default('', true) }}"
 
 # =============================================================================
+# MICROSOFT TEAMS NOTIFICATION SETTINGS
+# =============================================================================
+teams_enabled: "{{ lookup('env', 'TEAMS_ENABLED') | default('false', true) | bool }}"
+pgbackrest_teams_webhook_url: "{{ lookup('env', 'PGBACKREST_TEAMS_WEBHOOK_URL') | default('', true) }}"
+
+# =============================================================================
 # HAPROXY SETTINGS
 # =============================================================================
 haproxy_enabled: "{{ lookup('env', 'HAPROXY_ENABLED') | default('false', true) | bool }}"
+haproxy_version: "{{ lookup('env', 'HAPROXY_VERSION') | default('3.2.15', true) }}"
+haproxy_ip_vip: "{{ lookup('env', 'HAPROXY_IP_VIP') | default('192.168.1.100', true) }}"
+haproxy_maxconn: "{{ lookup('env', 'HAPROXY_MAXCONN') | default('2000', true) | int }}"
+
+haproxy_timeout_connect: "{{ lookup('env', 'HAPROXY_TIMEOUT_CONNECT') | default('5s', true) }}"
+haproxy_timeout_client: "{{ lookup('env', 'HAPROXY_TIMEOUT_CLIENT') | default('50s', true) }}"
+haproxy_timeout_server: "{{ lookup('env', 'HAPROXY_TIMEOUT_SERVER') | default('50s', true) }}"
+haproxy_timeout_check: "{{ lookup('env',  'HAPROXY_TIMEOUT_CHECK') | default('5s', true) }}"
+haproxy_timeout_queue: "{{ lookup('env', 'HAPROXY_TIMEOUT_QUEUE') | default('1m', true) }}"
+haproxy_timeout_http_request: "{{ lookup('env', 'HAPROXY_TIMEOUT_HTTP_REQUEST') | default('5s', true) }}"
+haproxy_timeout_http_keep_alive: "{{ lookup('env', 'HAPROXY_TIMEOUT_HTTP_KEEP_ALIVE') | default('15s', true) }}"
+haproxy_timeout_http_server_close: "{{ lookup('env', 'HAPROXY_TIMEOUT_HTTP_SERVER_CLOSE') | default('15s', true) }}"
+haproxy_timeout_tunnel: "{{ lookup('env', 'HAPROXY_TIMEOUT_TUNNEL') | default('1h', true) }}" 
+
+haproxy_config_dir: "{{ lookup('env', 'HAPROXY_CONFIG_DIR') | default('/etc/haproxy', true) }}"
+haproxy_log_dir: "{{ lookup('env', 'HAPROXY_LOG_DIR') | default('/var/log/haproxy', true) }}"
+haproxy_statistics_socket: "{{ lookup('env', 'HAPROXY_STATISTICS_SOCKET') | default('/var/run/haproxy.sock', true) }}"
+haproxy_statistics_port: "{{ lookup('env', 'HAPROXY_STATISTICS_PORT') | default('8080', true) | int }}"
+haproxy_statistics_user: "{{ lookup('env', 'HAPROXY_STATISTICS_USER') | default('haproxy', true) }}"
+haproxy_statistics_password: "{{ lookup('env', 'HAPROXY_STATISTICS_PASSWORD') | default('haproxy', true) }}"
+haproxy_read_write_listen_port: "{{ lookup('env', 'HAPROXY_READ_WRITE_LISTEN_PORT') | default('5000', true) | int }}"
+haproxy_read_only_listen_port: "{{ lookup('env', 'HAPROXY_READ_ONLY_LISTEN_PORT') | default('5001', true) | int }}"
+haproxy_backend_port: "{{ lookup('env', 'HAPROXY_BACKEND_PORT') | default('6432', true) | int }}"
+haproxy_health_check_interval: "{{ lookup('env', 'HAPROXY_HEALTH_CHECK_INTERVAL') | default('5s', true) }}"
+haproxy_health_check_timeout: "{{ lookup('env', 'HAPROXY_HEALTH_CHECK_TIMEOUT') | default('2s', true) }}"
+haproxy_health_check_fall: "{{ lookup('env', 'HAPROXY_HEALTH_CHECK_FALL') | default('3', true) | int }}"
+haproxy_health_check_rise: "{{ lookup('env', 'HAPROXY_HEALTH_CHECK_RISE') | default('2', true) | int }}"
+haproxy_log_level: "{{ lookup('env', 'HAPROXY_LOG_LEVEL') | default('info', true) }}"
+haproxy_log_format: "{{ lookup('env', 'HAPROXY_LOG_FORMAT') | default('%ci:%cp [%tr] %ft %b/%s %Tq %tsc %ac/%fc/%bc/%sc/%rc %sq %hr %hs', true) }}"
 
 # =============================================================================
 # PGBOUNCER SETTINGS
 # =============================================================================
+pgbouncer_version: "{{ lookup('env', 'PGBOUNCER_VERSION') | default('1.25.1', true) }}"
 pgbouncer_enabled: "{{ lookup('env', 'PGBOUNCER_ENABLED') | default('true', true) | bool }}"
 pgbouncer_listen_port: "{{ lookup('env', 'PGBOUNCER_LISTEN_PORT') | default('6432', true) | int }}"
 pgbouncer_listen_addr: "{{ lookup('env', 'PGBOUNCER_LISTEN_ADDR') | default('*', true) }}"

@@ -60,7 +60,7 @@
           apt:
             upgrade: yes
             update_cache: yes
-          when: ansible_os_family == "Debian"
+          when: ansible_facts['os_family'] == "Debian"
 
         - name: Start Patroni service
           systemd:
@@ -107,7 +107,7 @@
           apt:
             upgrade: yes
             update_cache: yes
-          when: ansible_os_family == "Debian"
+          when: ansible_facts['os_family'] == "Debian"
 
         - name: Start Patroni on old leader
           systemd:

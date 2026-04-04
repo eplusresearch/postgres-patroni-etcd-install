@@ -13,17 +13,17 @@ all:
     postgres:
       hosts:
         "{{ lookup('env', 'NODE1_NAME') | default('pg-node1', true) }}":
-          ansible_host: "{{ lookup('env', 'NODE1_IP') }}"
+          ansible_host: "{{ lookup('env', 'NODE1_PRIVATE_IP') }}"
           target_hostname: "{{ lookup('env', 'NODE1_NAME') | default('pg-node1', true) }}"
           patroni_name: node1
           etcd_name: etcd1
         "{{ lookup('env', 'NODE2_NAME') | default('pg-node2', true) }}":
-          ansible_host: "{{ lookup('env', 'NODE2_IP') }}"
+          ansible_host: "{{ lookup('env', 'NODE2_PRIVATE_IP') }}"
           target_hostname: "{{ lookup('env', 'NODE2_NAME') | default('pg-node2', true) }}"
           patroni_name: node2
           etcd_name: etcd2
         "{{ lookup('env', 'NODE3_NAME') | default('pg-node3', true) }}":
-          ansible_host: "{{ lookup('env', 'NODE3_IP') }}"
+          ansible_host: "{{ lookup('env', 'NODE3_PRIVATE_IP') }}"
           target_hostname: "{{ lookup('env', 'NODE3_NAME') | default('pg-node3', true) }}"
           patroni_name: node3
           etcd_name: etcd3

@@ -63,9 +63,12 @@ jobs:
         run: |
           # Check for required variables
           required_vars=(
-            "NODE1_IP"
-            "NODE2_IP"
-            "NODE3_IP"
+            "NODE1_PRIVATE_IP"
+            "NODE2_PRIVATE_IP"
+            "NODE3_PRIVATE_IP"
+            "NODE1_PUBLIC_IP"
+            "NODE2_PUBLIC_IP"
+            "NODE3_PUBLIC_IP"
             "POSTGRESQL_SUPERUSER_PASSWORD"
             "POSTGRESQL_REPLICATION_PASSWORD"
             "PATRONI_RESTAPI_PASSWORD"

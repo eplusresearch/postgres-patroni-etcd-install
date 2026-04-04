@@ -1,0 +1,11 @@
+---
+# Handlers for ProxySQL role
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: Restart ProxySQL
+  systemd:
+    name: proxysql
+    state: restarted

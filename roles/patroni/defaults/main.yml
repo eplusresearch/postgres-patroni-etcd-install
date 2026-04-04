@@ -1,7 +1,7 @@
 ---
 # Patroni role defaults
 
-patroni_version: "3.2.0"
+patroni_version: "4.1.0"
 patroni_config_dir: "/etc/patroni"
 patroni_scope: "postgres"
 patroni_namespace: "/service/"

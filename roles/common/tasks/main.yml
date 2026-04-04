@@ -5,7 +5,7 @@
   apt:
     update_cache: yes
     cache_valid_time: 3600
-  when: ansible_os_family == "Debian"
+  when: ansible_facts['os_family'] == "Debian"
 
 - name: Update dnf cache
   dnf:
@@ -15,9 +15,11 @@
 # =============================================================================
 # INSTALL COMMON PACKAGES
 # =============================================================================
+## Debian/Ubuntu
 - name: Install common packages (Debian/Ubuntu)
   apt:
     name:
+      - lsb-release
       - wget
       - curl
       - vim
@@ -25,6 +27,7 @@
       - iotop
       - net-tools
       - dnsutils
+      - gnupg
       - gnupg2
       - software-properties-common
       - apt-transport-https
@@ -36,8 +39,45 @@
       - jq
       - netcat-openbsd
     state: present
-  when: ansible_os_family == "Debian"
+  when: ansible_facts['os_family'] == "Debian"
+  
+- name: Ensure locales package is installed (Debian/Ubuntu)
+  apt:
+    name: locales
+    state: present
+  when: ansible_facts['os_family'] == "Debian"
 
+- name: Generate en_US.UTF-8 locale (Debian/Ubuntu)
+  locale_gen:
+    name: en_US.UTF-8
+    state: present
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Set system locale to en_US.UTF-8 (Debian/Ubuntu)
+  command: update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+  changed_when: false
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Ensure cron package is installed (Debian/Ubuntu)
+  apt:
+    name: cron
+    state: present
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Ensure cron service is enabled and started
+  service:
+    name: cron
+    state: started
+    enabled: yes
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Install PostgreSQL Python adapter
+  apt:
+    name: python3-psycopg2
+    state: present
+  when: ansible_facts['os_family'] == "Debian"
+
+## RedHat/CentOS
 - name: Install common packages (RedHat)
   dnf:
     name:
@@ -57,6 +97,35 @@
     state: present
   when: ansible_os_family == "RedHat"
 
+- name: Ensure English langpack is installed (RedHat)
+  dnf:
+    name: glibc-langpack-en
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Set system locale to en_US.UTF-8 (RedHat)
+  command: localectl set-locale LANG=en_US.UTF-8
+  changed_when: false
+  when: ansible_os_family == "RedHat"
+
+- name: Ensure cronie package is installed (RedHat)
+  dnf:
+    name: cronie
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Ensure crond service is enabled and started (RedHat)
+  service:
+    name: crond
+    state: started
+    enabled: yes
+  when: ansible_os_family == "RedHat"
+
+- name: Install PostgreSQL Python adapter (RedHat)
+  dnf:
+    name: python3-psycopg2
+    state: present
+  when: ansible_os_family == "RedHat"
 # =============================================================================
 # HOSTNAME CONFIGURATION
 # =============================================================================
@@ -176,18 +245,7 @@
     - firewall_enabled | default(true)
     - firewall_type | default('ufw') == 'ufw'
     - "'postgres' in group_names"
-
-- name: Configure UFW - Allow PgBouncer
-  ufw:
-    rule: allow
-    src: "{{ cluster_network }}"
-    port: "{{ pgbouncer_listen_port | default(6432) }}"
-    proto: tcp
-  when:
-    - firewall_enabled | default(true)
-    - firewall_type | default('ufw') == 'ufw'
-    - "'postgres' in group_names"
-
+ 
 # =============================================================================
 # VPN ACCESS RULES
 # =============================================================================
@@ -342,7 +400,7 @@
     state: present
     reload: yes
   loop:
-    - { name: "vm.swappiness", value: "10" }
+    - { name: "vm.swappiness", value: "1" }
     - { name: "vm.overcommit_memory", value: "2" }
     - { name: "vm.overcommit_ratio", value: "80" }
     - { name: "kernel.shmmax", value: "17179869184" }
@@ -363,6 +421,14 @@
     - "postgres soft nproc 65536"
     - "postgres hard nproc 65536"
   when: "'postgres' in group_names"
+
+# =============================================================================
+# DISABLE APPARMOR (Debian/Ubuntu)
+# =============================================================================
+- name: Disable AppArmor
+  command: systemctl disable --now apparmor
+  when: ansible_facts['os_family'] == "Debian"
+  ignore_errors: yes
 
 # =============================================================================
 # DISABLE SELINUX (RedHat)

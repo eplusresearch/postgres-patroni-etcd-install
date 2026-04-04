@@ -1,0 +1,14 @@
+---
+# proxysql role defaults
+
+proxysql_version: "3.0.6"
+proxysql_data_dir: "/var/lib/proxysql"
+proxysql_config_dir: "/etc/proxysql"
+proxysql_listen_addr: "0.0.0.0"
+proxysql_listen_port: 6133
+proxysql_admin_port: 6132
+proxysql_admin_user: "admin"
+proxysql_admin_password: "admin"
+
+# Build ProxySQL endpoints from inventory
+proxysql_endpoints: "{{ groups['proxysql'] | map('extract', hostvars, ['ansible_host']) | list }}"
