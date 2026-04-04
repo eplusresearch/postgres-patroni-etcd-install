@@ -23,7 +23,7 @@
   register: pgdg_key
   changed_when: "'ADDED' in pgdg_key.stdout"
   when:
-    - ansible_os_family == "Debian"
+    - ansible_facts['os_family'] == "Debian"
     - "'backup' in group_names"
 
 - name: Add PostgreSQL PGDG apt repository (backup server)
@@ -32,7 +32,7 @@
     filename: pgdg
     state: present
   when:
-    - ansible_os_family == "Debian"
+    - ansible_facts['os_family'] == "Debian"
     - "'backup' in group_names"
 
 - name: Install pgBackRest (Debian/Ubuntu)

@@ -67,7 +67,7 @@
 - name: Configure UFW - Allow ProxySQL admin port
   ufw:
     rule: allow
-    port: "{{ proxysql_admin_port }}/tcp"
+    port: "{{ proxysql_admin_port }}"
     proto: tcp
   when: firewall_type == "ufw"
 

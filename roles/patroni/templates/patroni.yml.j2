@@ -148,7 +148,7 @@ postgresql:
   listen: 0.0.0.0:{{ postgresql_port }}
   connect_address: {{ ansible_host }}:{{ postgresql_port }}
   data_dir: {{ postgresql_data_dir }}
-{% if ansible_os_family == "Debian" %}
+{% if ansible_facts['os_family'] == "Debian" %}
   bin_dir: /usr/lib/postgresql/{{ postgresql_version }}/bin
 {% else %}
   bin_dir: /usr/pgsql-{{ postgresql_version }}/bin

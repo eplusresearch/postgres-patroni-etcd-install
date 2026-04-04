@@ -149,7 +149,7 @@
     name: chrony
     state: present
   when:
-    - ansible_os_family == "Debian"
+    - ansible_facts['os_family'] == "Debian"
     - ntp_enabled | default(true)
 
 - name: Install chrony (RedHat)
@@ -189,7 +189,7 @@
     name: ufw
     state: present
   when:
-    - ansible_os_family == "Debian"
+    - ansible_facts['os_family'] == "Debian"
     - firewall_enabled | default(true)
     - firewall_type | default('ufw') == 'ufw'
 

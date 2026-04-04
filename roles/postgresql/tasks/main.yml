@@ -84,7 +84,7 @@
 - name: Drop default PostgreSQL cluster (Debian/Ubuntu)
   shell: "pg_dropcluster {{ postgresql_version }} main --stop"
   when:
-    - ansible_os_family == "Debian"
+    - ansible_facts['os_family'] == "Debian"
     - cluster_exists.stdout == "exists"
   ignore_errors: true
 
