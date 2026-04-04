@@ -7,7 +7,7 @@
 - name: Import ProxySQL GPG key (Debian/Ubuntu)
   apt_key:
     url: https://repo.proxysql.com/ProxySQL/proxysql-3.0.x/repo_pub_key.gpg
-    dest: /etc/apt/trusted.gpg.d/proxysql-3.0.x-keyring.gpg
+    keyring: /etc/apt/trusted.gpg.d/proxysql-3.0.x-keyring.gpg
     state: present
   when: ansible_facts['os_family'] == "Debian"
 
