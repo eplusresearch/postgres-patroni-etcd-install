@@ -10,7 +10,7 @@
 - name: Update dnf cache
   dnf:
     update_cache: yes
-  when: ansible_os_family == "RedHat"
+  when: ansible_facts['os_family'] == "RedHat"
 
 # =============================================================================
 # INSTALL COMMON PACKAGES
@@ -95,37 +95,37 @@
       - jq
       - nc
     state: present
-  when: ansible_os_family == "RedHat"
+  when: ansible_facts['os_family'] == "RedHat"
 
 - name: Ensure English langpack is installed (RedHat)
   dnf:
     name: glibc-langpack-en
     state: present
-  when: ansible_os_family == "RedHat"
+  when: ansible_facts['os_family'] == "RedHat"
 
 - name: Set system locale to en_US.UTF-8 (RedHat)
   command: localectl set-locale LANG=en_US.UTF-8
   changed_when: false
-  when: ansible_os_family == "RedHat"
+  when: ansible_facts['os_family'] == "RedHat"
 
 - name: Ensure cronie package is installed (RedHat)
   dnf:
     name: cronie
     state: present
-  when: ansible_os_family == "RedHat"
+  when: ansible_facts['os_family'] == "RedHat"
 
 - name: Ensure crond service is enabled and started (RedHat)
   service:
     name: crond
     state: started
     enabled: yes
-  when: ansible_os_family == "RedHat"
+  when: ansible_facts['os_family'] == "RedHat"
 
 - name: Install PostgreSQL Python adapter (RedHat)
   dnf:
     name: python3-psycopg2
     state: present
-  when: ansible_os_family == "RedHat"
+  when: ansible_facts['os_family'] == "RedHat"
 # =============================================================================
 # HOSTNAME CONFIGURATION
 # =============================================================================
@@ -157,7 +157,7 @@
     name: chrony
     state: present
   when:
-    - ansible_os_family == "RedHat"
+    - ansible_facts['os_family'] == "RedHat"
     - ntp_enabled | default(true)
 
 - name: Configure chrony
@@ -314,7 +314,7 @@
     name: firewalld
     state: present
   when:
-    - ansible_os_family == "RedHat"
+    - ansible_facts['os_family'] == "RedHat"
     - firewall_enabled | default(true)
     - firewall_type | default('ufw') == 'firewalld'
 
@@ -436,5 +436,5 @@
 - name: Disable SELinux
   selinux:
     state: disabled
-  when: ansible_os_family == "RedHat"
+  when: ansible_facts['os_family'] == "RedHat"
   ignore_errors: yes

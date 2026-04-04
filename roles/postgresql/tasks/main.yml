@@ -22,13 +22,13 @@
     name: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-{{ ansible_distribution_major_version }}-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
     state: present
     disable_gpg_check: true
-  when: ansible_os_family == "RedHat"
+  when: ansible_facts['os_family'] == "RedHat"
 
 - name: Disable built-in PostgreSQL module (RedHat)
   shell: dnf -qy module disable postgresql
   args:
     warn: false
-  when: ansible_os_family == "RedHat"
+  when: ansible_facts['os_family'] == "RedHat"
   changed_when: false
   ignore_errors: true
 
@@ -55,7 +55,7 @@
       - "postgresql{{ postgresql_version }}-devel"
       - python3-psycopg2
     state: present
-  when: ansible_os_family == "RedHat"
+  when: ansible_facts['os_family'] == "RedHat"
 
 # =============================================================================
 # STOP AND DISABLE DEFAULT POSTGRESQL SERVICE
@@ -124,7 +124,7 @@
     - pg_dumpall
     - pg_restore
     - pg_rewind
-  when: ansible_os_family == "RedHat"
+  when: ansible_facts['os_family'] == "RedHat"
 
 # =============================================================================
 # VERIFY INSTALLATION

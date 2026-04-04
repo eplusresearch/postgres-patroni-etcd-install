@@ -27,7 +27,7 @@
       - "postgresql{{ postgresql_version }}-devel"
       - gcc
     state: present
-  when: ansible_os_family == "RedHat"
+  when: ansible_facts['os_family'] == "RedHat"
 
 # =============================================================================
 # INSTALL PATRONI
