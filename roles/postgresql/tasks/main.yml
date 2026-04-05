@@ -15,6 +15,10 @@
     repo: "deb http://apt.postgresql.org/pub/repos/apt {{ ansible_facts['distribution_release'] }}-pgdg main"
     state: present
     filename: pgdg
+  register: apt_repo_status
+  until: apt_repo_status is success
+  retries: 10
+  delay: 15
   when: ansible_facts['os_family'] == "Debian"
 
 - name: Add PostgreSQL repository (RedHat)

@@ -1,4 +1,9 @@
 ---
+- name: Wait for unattended-upgrades to finish
+  raw: systemd-run --property="After=apt-daily.service apt-daily-upgrade.service" --wait /bin/true
+  changed_when: false
+  when: ansible_facts['os_family'] == "Debian"
+  
 # Common Role - Cài đặt các gói cơ bản và cấu hình hệ thống
 
 - name: Update apt cache
