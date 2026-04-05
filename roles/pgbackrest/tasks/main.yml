@@ -28,7 +28,7 @@
 
 - name: Add PostgreSQL PGDG apt repository (backup server)
   apt_repository:
-    repo: "deb [signed-by=/usr/share/keyrings/postgresql-archive-keyring.gpg] https://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main"
+    repo: "deb [signed-by=/usr/share/keyrings/postgresql-archive-keyring.gpg] https://apt.postgresql.org/pub/repos/apt {{ ansible_facts['distribution_release'] }}-pgdg main"
     filename: pgdg
     state: present
   when:

@@ -12,7 +12,7 @@
 
 - name: Add PostgreSQL repository (Debian/Ubuntu)
   apt_repository:
-    repo: "deb http://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main"
+    repo: "deb http://apt.postgresql.org/pub/repos/apt {{ ansible_facts['distribution_release'] }}-pgdg main"
     state: present
     filename: pgdg
   when: ansible_facts['os_family'] == "Debian"

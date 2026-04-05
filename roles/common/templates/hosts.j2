@@ -2,7 +2,7 @@
 # Do not edit manually
 
 127.0.0.1   localhost localhost.localdomain
-# 127.0.1.1   # Tôi cần thêm chổ này
+127.0.1.1   {{ hostvars[host]['target_hostname'] | default(host) }}
 ::1         localhost localhost.localdomain ip6-localhost ip6-loopback
 
 # PostgreSQL HA Cluster Nodes

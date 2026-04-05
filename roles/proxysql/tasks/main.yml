@@ -13,7 +13,7 @@
 
 - name: Add ProxySQL repository (Debian/Ubuntu)
   apt_repository:
-    repo: "deb https://repo.proxysql.com/ProxySQL/proxysql-3.0.x/{{ ansible_distribution_release }}/ ./"
+    repo: "deb https://repo.proxysql.com/ProxySQL/proxysql-3.0.x/{{ ansible_facts['distribution_release'] }}/ ./"
     state: present
     filename: proxysql
     update_cache: yes
