@@ -2,7 +2,7 @@
 # Do not edit manually
 
 127.0.0.1   localhost localhost.localdomain
-127.0.1.1   {{ hostvars[host]['target_hostname'] | default(host) }}
+127.0.1.1   {{ target_hostname | default(inventory_hostname) }}
 ::1         localhost localhost.localdomain ip6-localhost ip6-loopback
 
 # PostgreSQL HA Cluster Nodes

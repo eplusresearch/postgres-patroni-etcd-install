@@ -7,7 +7,7 @@
 - name: Install PgBouncer (Debian/Ubuntu)
   apt:
     # Nối phiên bản bằng dấu =
-    name: "pgbouncer={{ pgbouncer_version }}"
+    name: "pgbouncer={{ pgbouncer_version }}*"
     state: present
     update_cache: yes
   when: ansible_facts['os_family'] == "Debian"
