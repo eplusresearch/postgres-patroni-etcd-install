@@ -64,20 +64,20 @@
 # =============================================================================
 # CONFIGURE FIREWALL FOR PROXYSQL
 # =============================================================================
-- name: Configure UFW - Allow ProxySQL admin port
-  ufw:
-    rule: allow
-    port: "{{ proxysql_admin_port }}"
-    proto: tcp
-  when: firewall_type == "ufw"
+# - name: Configure UFW - Allow ProxySQL admin port
+#   ufw:
+#     rule: allow
+#     port: "{{ proxysql_admin_port }}"
+#     proto: tcp
+#   when: firewall_type == "ufw"
 
-- name: Configure firewalld - Allow ProxySQL
-  firewalld:
-    port: "{{ proxysql_listen_port }}/tcp"
-    permanent: yes
-    state: enabled
-    immediate: yes
-  when: firewall_type == "firewalld"
+# - name: Configure firewalld - Allow ProxySQL
+#   firewalld:
+#     port: "{{ proxysql_listen_port }}/tcp"
+#     permanent: yes
+#     state: enabled
+#     immediate: yes
+#   when: firewall_type == "firewalld"
 
 # =============================================================================
 # VERIFY INSTALLATION
